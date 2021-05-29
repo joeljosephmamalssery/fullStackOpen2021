@@ -1,7 +1,7 @@
-const Person = ({ name, contact }) => {
+const Person = ({ name, number }) => {
   return (
     <p>
-      {name} {contact}
+      {name} {number}
     </p>
   );
 };
