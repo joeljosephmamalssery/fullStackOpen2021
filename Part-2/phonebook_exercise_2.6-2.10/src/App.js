@@ -1,6 +1,7 @@
 import './App.css';
 import { useState, useEffect } from 'react';
 import Person from './Components/person';
+import contactFunctions from './Components/contactFunctions';
 import axios from 'axios';
 
 const App = () => {
@@ -9,10 +10,6 @@ const App = () => {
   const [newNumber, setNewNumber] = useState('');
   const [searchName, setSearchName] = useState('');
   const [result, setResult] = useState(false);
-  function handleId() {
-    const myRnId = () => parseInt(Date.now() * Math.random());
-    return myRnId();
-  }
   useEffect(() => {
     axios.get('http://localhost:3001/persons').then((response) => {
       setPersons(response.data);
@@ -30,20 +27,36 @@ const App = () => {
   };
   const addContact = (event) => {
     event.preventDefault();
-    const found = persons.filter(
+
+    const found = persons.find(
       (person) => person.name.toString().toLowerCase() === newName.toLowerCase()
     );
 
-    if (found.length > 0) {
-      alert(`${newName} is already on the contacts list`);
+    if (found) {
+      if (
+        window.confirm(
+          `${newName} is already on the contacts list.Do you want to overwrite?`
+        )
+      ) {
+        found.number = newNumber;
+        contactFunctions.updateContact(found);
+      }
     } else {
-      const idGen = handleId();
-      const newContact = persons.concat({
+      const idGen = contactFunctions.handleId();
+      const newContact = {
         name: newName,
         number: newNumber,
         id: idGen,
-      });
-      setPersons(newContact);
+      };
+
+      setPersons(
+        persons.concat({
+          name: newName,
+          number: newNumber,
+          id: idGen,
+        })
+      );
+      contactFunctions.saveContact({ newContact });
     }
   };
   const searchContact = (event) => {
@@ -60,7 +73,7 @@ const App = () => {
     }
 
     if (resultNumber !== 0) {
-      const idGen = handleId();
+      const idGen = contactFunctions.handleId();
       const newContact = [
         { name: resultName, number: resultNumber, id: idGen },
       ];
@@ -94,9 +107,7 @@ const App = () => {
       <h2>{result ? 'Search Results' : 'Numbers'}</h2>
       ...
       <div>
-        {persons.map((person) => (
-          <Person key={person.id} name={person.name} number={person.number} />
-        ))}
+        <Person persons={persons} setPersons={setPersons} />
       </div>
     </div>
   );
