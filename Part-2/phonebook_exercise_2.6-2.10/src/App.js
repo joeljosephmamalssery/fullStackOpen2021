@@ -2,14 +2,16 @@ import './App.css';
 import { useState, useEffect } from 'react';
 import Person from './Components/person';
 import contactFunctions from './Components/contactFunctions';
+import Notification from './Components/notification';
 import axios from 'axios';
-
 const App = () => {
   const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState('');
   const [newNumber, setNewNumber] = useState('');
   const [searchName, setSearchName] = useState('');
   const [result, setResult] = useState(false);
+  const [message, setMessage] = useState(null);
+  const [ErrorMessageType, setErrorMessageType] = useState(null);
   useEffect(() => {
     axios.get('http://localhost:3001/persons').then((response) => {
       setPersons(response.data);
@@ -39,7 +41,21 @@ const App = () => {
         )
       ) {
         found.number = newNumber;
-        contactFunctions.updateContact(found);
+        const notAvailable = contactFunctions.updateContact(found);
+        console.log(notAvailable);
+        if (notAvailable === 0) {
+          setMessage(
+            `Contact '${newName}' has already been removed from the contact list`
+          );
+          setErrorMessageType(true);
+        } else {
+          setMessage(`Contact '${newName}' is updated`);
+          setErrorMessageType(false);
+        }
+
+        setTimeout(() => {
+          setMessage(null);
+        }, 5000);
       }
     } else {
       const idGen = contactFunctions.handleId();
@@ -57,6 +73,11 @@ const App = () => {
         })
       );
       contactFunctions.saveContact({ newContact });
+      setMessage(`Contact '${newName}' is added to the contacts list`);
+      setErrorMessageType(false);
+      setTimeout(() => {
+        setMessage(null);
+      }, 5000);
     }
   };
   const searchContact = (event) => {
@@ -80,12 +101,17 @@ const App = () => {
       setPersons(newContact);
       setResult(true);
     } else {
-      alert(`${searchName} is not on the contacts list`);
+      setMessage(`Contact '${searchName}' is not on the contacts list`);
+      setErrorMessageType(true);
+      setTimeout(() => {
+        setMessage(null);
+      }, 5000);
     }
   };
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={message} errorMessageType={ErrorMessageType} />
       <form onSubmit={searchContact}>
         Filter shown with
         <input value={searchName} onChange={handleSearchFunction} />
